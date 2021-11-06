@@ -19,8 +19,25 @@ import { skipLink } from './utils/skipLink'
 
 export { useClientRouter }
 export { navigate }
+export { disableClientSideNavigation }
+export { restoreClientSideNavigation }
 
 setupNativeScrollRestoration()
+
+let clientSideNavigationDisabled = false
+
+/**
+ * Disable client side navigation.
+ *
+ * After calling this, clicking on links or calling navigate will perform a full page load.
+ */
+function disableClientSideNavigation() {
+  clientSideNavigationDisabled = true
+}
+
+function restoreClientSideNavigation() {
+  clientSideNavigationDisabled = false
+}
 
 let isAlreadyCalled: boolean = false
 function useClientRouter({
@@ -57,6 +74,10 @@ function useClientRouter({
     fetchAndRender(scrollTarget)
   })
   navigateFunction = async (url: string, { keepScrollPosition }: { keepScrollPosition: boolean }) => {
+    if (clientSideNavigationDisabled) {
+      location.href = url
+      return
+    }
     const scrollTarget = keepScrollPosition ? 'preserve-scroll' : 'scroll-to-top-or-hash'
     await fetchAndRender(scrollTarget, url)
   }
@@ -177,7 +198,7 @@ function onLinkClick(callback: (url: string, { keepScrollPosition }: { keepScrol
   // Code adapted from https://github.com/HenrikJoreteg/internal-nav-helper/blob/5199ec5448d0b0db7ec63cf76d88fa6cad878b7d/src/index.js#L11-L29
 
   function onClick(ev: MouseEvent) {
-    if (!isNormalLeftClick(ev)) return
+    if (!isNormalLeftClick(ev) || clientSideNavigationDisabled) return
 
     const linkTag = findLinkTag(ev.target as HTMLElement)
     if (!linkTag) return

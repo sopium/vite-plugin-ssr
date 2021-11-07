@@ -235,7 +235,8 @@ function injectScript(htmlString: string, script: PageAsset): string {
 function injectLinkTags(htmlString: string, linkTags: string[]): string {
   assert(linkTags.every((tag) => tag.startsWith('<') && tag.endsWith('>')))
   const injection = linkTags.join('')
-  return injectBegin(htmlString, injection)
+  const headClose = '</head>'
+  return injectAtClosingTag(htmlString, headClose, injection)
 }
 
 const headOpen = /<head[^>]*>/
